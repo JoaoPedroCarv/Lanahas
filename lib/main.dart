@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'detalhe_receita.dart'; // Importa a tela de detalhes da receita
+import 'lista_receitas.dart'; // Importa a tela de lista de receitas salvas
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  // Substitua os valores abaixo pelas suas credenciais do Firebase
   const FirebaseOptions firebaseOptions = FirebaseOptions(
     apiKey: "AIzaSyAa_pDIscMAb3LbVi_lSv_qVSUppje6aCE",
     appId: "1:1049572431533:web:619b3d91e0d40b07ef5824",
@@ -17,11 +18,11 @@ void main() async {
   );
 
   await Firebase.initializeApp(options: firebaseOptions);
-  runApp(const MyApp());
+  runApp(const MeuApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MeuApp extends StatelessWidget {
+  const MeuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,25 +31,24 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(),
+      home: const MinhaPaginaInicial(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class MinhaPaginaInicial extends StatefulWidget {
+  const MinhaPaginaInicial({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MinhaPaginaInicial> createState() => _MinhaPaginaInicialState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List _recipes = [];
+class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
+  List _receitas = [];
   bool _isLoading = false;
-  String _selectedCountry = 'American'; // Valor padrão para o país
+  String _paisSelecionado = 'American'; // Valor padrão para o país
 
-  // Lista de opções de países para o dropdown
-  final List<String> _countryOptions = [
+  final List<String> _opcoesPais = [
     'American',
     'British',
     'Canadian',
@@ -63,20 +63,20 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchRecipes(); // Buscar receitas ao iniciar a página
+    _buscarReceitas(); // Buscar receitas ao iniciar a página
   }
 
-  Future<void> _fetchRecipes() async {
+  Future<void> _buscarReceitas() async {
     setState(() {
       _isLoading = true;
     });
     try {
       final response = await http.get(Uri.parse(
-          'https://www.themealdb.com/api/json/v1/1/filter.php?a=$_selectedCountry'));
+          'https://www.themealdb.com/api/json/v1/1/filter.php?a=$_paisSelecionado'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          _recipes = data['meals'] ?? [];
+          _receitas = data['meals'] ?? [];
         });
       } else {
         print('Erro ao buscar receitas: ${response.statusCode}');
@@ -109,65 +109,45 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           centerTitle: true,
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.list),
+              onPressed: () {
+                // Navegar para a tela de lista de receitas salvas
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ListaReceitasPage(),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Dropdown para selecionar o país
                 Row(
                   children: [
                     Expanded(
-                      child: Padding(
-                        padding:
-                            const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-                        child: DropdownButton<String>(
-                          value: _selectedCountry,
-                          items: _countryOptions.map((String country) {
-                            return DropdownMenuItem<String>(
-                              value: country,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12.0),
-                                child: Text(
-                                  country,
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    letterSpacing: 0.0,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (String? newCountry) {
-                            setState(() {
-                              _selectedCountry = newCountry!;
-                              _fetchRecipes(); // Buscar receitas do país selecionado
-                            });
-                          },
-                          hint: const Text('Select...'),
-                          isExpanded: true,
-                          icon: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Colors.grey, // Cor do ícone
-                            size: 24,
-                          ),
-                          // Cor de fundo do DropdownButton quando fechado
-                          focusColor: Colors.white,
-                          dropdownColor:
-                              Colors.white, // Cor de fundo do menu suspenso
-                          elevation: 2,
-                          underline:
-                              SizedBox(), // Remove a linha abaixo do Dropdown
-                          borderRadius:
-                              BorderRadius.circular(8), // Borda arredondada
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            letterSpacing: 0.0,
-                          ),
-                        ),
+                      child: DropdownButton<String>(
+                        value: _paisSelecionado,
+                        items: _opcoesPais.map((String pais) {
+                          return DropdownMenuItem<String>(
+                            value: pais,
+                            child: Text(pais),
+                          );
+                        }).toList(),
+                        onChanged: (String? novoPais) {
+                          setState(() {
+                            _paisSelecionado = novoPais!;
+                            _buscarReceitas();
+                          });
+                        },
+                        hint: const Text('Selecione o país'),
+                        isExpanded: true,
                       ),
                     ),
                   ],
@@ -177,101 +157,104 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
-                          itemCount: _recipes.length,
+                          itemCount: _receitas.length,
                           itemBuilder: (context, index) {
-                            final recipe = _recipes[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 16.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    // Exibição da imagem da receita
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Image.network(
-                                              recipe[
-                                                  'strMealThumb'], // Foto da receita
-                                              width: 106,
-                                              height: 85,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(8, 0, 0, 0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  // Nome da receita
-                                                  Padding(
-                                                    padding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(
-                                                                0, 0, 0, 4),
-                                                    child: Text(
-                                                      recipe[
-                                                          'strMeal'], // Nome da receita
-                                                      style: const TextStyle(
-                                                        fontFamily: 'Inter',
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        letterSpacing: 0.0,
-                                                      ),
-                                                      maxLines:
-                                                          1, // Limita o nome a uma linha
-                                                      overflow: TextOverflow
-                                                          .ellipsis, // Adiciona '...' se o nome for longo
-                                                    ),
-                                                  ),
-                                                  // Descrição da receita
-                                                  const Padding(
-                                                    padding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(
-                                                                0, 0, 0, 4),
-                                                    child: Text(
-                                                      'Delicious Recipe', // Texto de exemplo
-                                                      style: TextStyle(
-                                                        fontFamily: 'Inter',
-                                                        fontSize: 14,
-                                                        color: Colors.grey,
-                                                        letterSpacing: 0.0,
-                                                      ),
-                                                      maxLines:
-                                                          1, // Limita a descrição a uma linha
-                                                      overflow: TextOverflow
-                                                          .ellipsis, // Adiciona '...' se a descrição for longa
-                                                    ),
-                                                  ),
-                                                ],
+                            final receita = _receitas[index];
+                            return GestureDetector(
+                              onTap: () {
+                                // Navegar para a tela de detalhes
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetalheReceitaPage(
+                                      receita: receita,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 16.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Image.network(
+                                                receita['strMealThumb'],
+                                                width: 106,
+                                                height: 85,
+                                                fit: BoxFit.cover,
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(8, 0, 0, 0),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          EdgeInsetsDirectional
+                                                              .fromSTEB(
+                                                                  0, 0, 0, 4),
+                                                      child: Text(
+                                                        receita['strMeal'],
+                                                        style: const TextStyle(
+                                                          fontFamily: 'Inter',
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    const Padding(
+                                                      padding:
+                                                          EdgeInsetsDirectional
+                                                              .fromSTEB(
+                                                                  0, 0, 0, 4),
+                                                      child: Text(
+                                                        'Delicious Recipe',
+                                                        style: TextStyle(
+                                                          fontFamily: 'Inter',
+                                                          fontSize: 14,
+                                                          color: Colors.grey,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    // Ícone para navegar para os detalhes da receita
-                                    const Icon(
-                                      Icons.arrow_forward,
-                                      color: Colors.black,
-                                      size: 24,
-                                    ),
-                                  ],
+                                      const Icon(
+                                        Icons.arrow_forward,
+                                        color: Colors.black,
+                                        size: 24,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
