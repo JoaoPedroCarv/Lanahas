@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:lottie/lottie.dart';
 
 class DetalheReceitaPage extends StatefulWidget {
   final dynamic receita;
@@ -15,6 +15,7 @@ class DetalheReceitaPage extends StatefulWidget {
 
 class _DetalheReceitaPageState extends State<DetalheReceitaPage> {
   bool _isLoading = false;
+  bool _showLottie = false;
   Map _detalhesReceita = {};
 
   @override
@@ -50,7 +51,6 @@ class _DetalheReceitaPageState extends State<DetalheReceitaPage> {
   }
 
   Future<void> _salvarReceita() async {
-    // Acessa o Firestore e insere os dados da receita
     try {
       await FirebaseFirestore.instance.collection('receitas').add({
         'nome': _detalhesReceita['strMeal'] ?? 'Nome não disponível',
@@ -66,6 +66,16 @@ class _DetalheReceitaPageState extends State<DetalheReceitaPage> {
           }
           return null;
         }).where((e) => e != null).toList(),
+      });
+
+      setState(() {
+        _showLottie = true;
+      });
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      setState(() {
+        _showLottie = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,185 +105,193 @@ class _DetalheReceitaPageState extends State<DetalheReceitaPage> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Container(
-              color: Colors.grey[100], // Fundo da tela igual à primeira
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        _detalhesReceita['strMealThumb'] ?? '',
-                        width: double.infinity,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Nome da Receita (Container de largura completa)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _detalhesReceita['strMeal'] ?? 'Nome não disponível',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Container(
+                  color: Colors.grey[100],
+                  padding: const EdgeInsets.all(16.0),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            _detalhesReceita['strMealThumb'] ?? '',
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Categoria da Receita (Container de largura completa)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Categoria: ${_detalhesReceita['strCategory'] ?? 'Categoria não disponível'}',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Instruções (Container com título e conteúdo)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Instruções:',
-                            style: TextStyle(
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _detalhesReceita['strMeal'] ??
+                                'Nome não disponível',
+                            style: const TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 18,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const Divider(color: Colors.grey),
-                          const SizedBox(height: 8),
-                          Text(
-                            _detalhesReceita['strInstructions'] ??
-                                'Instruções não disponíveis.',
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Categoria: ${_detalhesReceita['strCategory'] ?? 'Categoria não disponível'}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 16,
-                              height: 1.5,
+                              color: Colors.grey,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Ingredientes (Container com título e lista de ingredientes)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Ingredientes:',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Divider(color: Colors.grey),
-                          const SizedBox(height: 8),
-                          _detalhesReceita['strIngredient1'] != null
-                              ? Column(
-                                  children: List.generate(20, (index) {
-                                    String? ingrediente = _detalhesReceita[
-                                        'strIngredient${index + 1}'];
-                                    String? medida = _detalhesReceita[
-                                        'strMeasure${index + 1}'];
-
-                                    if (ingrediente == null ||
-                                        ingrediente.isEmpty) {
-                                      return SizedBox.shrink();
-                                    }
-
-                                    return Container(
-                                      width: double.infinity,
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          // Nome e medida do ingrediente
-                                          Expanded(
-                                            child: Text(
-                                              '$ingrediente: $medida',
-                                              style: const TextStyle(
-                                                fontFamily: 'Inter',
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }),
-                                )
-                              : const Text(
-                                  'Sem ingredientes disponíveis.',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                        ],
-                      ),
-                    ),
-                    // Botão para salvar no Firebase
-                    const SizedBox(height: 16),
-                    Padding(
-                      // Adicionando Padding de 24 na parte inferior
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: Center(
-                        // Centralizando o botão
-                        child: ElevatedButton(
-                          onPressed: _salvarReceita,
-                          child: const Text(
-                            'Salvar Receita',
-                            style:
-                                TextStyle(color: Colors.white), // Texto branco
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 12),
-                            textStyle: const TextStyle(fontSize: 16),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Instruções:',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Divider(color: Colors.grey),
+                              const SizedBox(height: 8),
+                              Text(
+                                _detalhesReceita['strInstructions'] ??
+                                    'Instruções não disponíveis.',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Ingredientes:',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Divider(color: Colors.grey),
+                              const SizedBox(height: 8),
+                              _detalhesReceita['strIngredient1'] != null
+                                  ? Column(
+                                      children: List.generate(20, (index) {
+                                        String? ingrediente = _detalhesReceita[
+                                            'strIngredient${index + 1}'];
+                                        String? medida = _detalhesReceita[
+                                            'strMeasure${index + 1}'];
+
+                                        if (ingrediente == null ||
+                                            ingrediente.isEmpty) {
+                                          return SizedBox.shrink();
+                                        }
+
+                                        return Container(
+                                          width: double.infinity,
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  '$ingrediente: $medida',
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Inter',
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    )
+                                  : const Text(
+                                      'Sem ingredientes disponíveis.',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Center(
+                            child: ElevatedButton(
+                              onPressed: _salvarReceita,
+                              child: const Text(
+                                'Salvar Receita',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 32, vertical: 12),
+                                textStyle: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ),
+          if (_showLottie)
+            Positioned.fill(
+              child: Center(
+                child: Lottie.asset(
+                  'success_animation.json',
+                  width: 200,
+                  height: 200,
+                  repeat: false,
                 ),
               ),
             ),
+        ],
+      ),
     );
   }
 }

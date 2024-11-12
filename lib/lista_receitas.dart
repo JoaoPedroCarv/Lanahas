@@ -16,7 +16,7 @@ class _ListaReceitasPageState extends State<ListaReceitasPage> {
   @override
   void initState() {
     super.initState();
-    _buscarReceitasSalvas(); // Busca as receitas ao iniciar a página
+    _buscarReceitasSalvas();
   }
 
   Future<void> _buscarReceitasSalvas() async {
@@ -38,13 +38,62 @@ class _ListaReceitasPageState extends State<ListaReceitasPage> {
     }
   }
 
+  Future<void> _removerReceita(String receitaId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('receitas')
+          .doc(receitaId)
+          .delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Receita removida com sucesso!')),
+      );
+      _buscarReceitasSalvas();
+    } catch (e) {
+      print('Erro ao remover a receita: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao remover a receita.')),
+      );
+    }
+  }
+
+  void _confirmarRemocao(String receitaId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar remoção'),
+          content:
+              const Text('Tem certeza de que deseja remover esta receita?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _removerReceita(receitaId);
+              },
+              child: const Text('Remover'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: const Color(0xFFE6E648),
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           'Receitas Salvas',
           style: TextStyle(
@@ -70,14 +119,12 @@ class _ListaReceitasPageState extends State<ListaReceitasPage> {
                           final receita = _receitas[index];
                           return GestureDetector(
                             onTap: () {
-                              // Navegar para a tela de detalhes passando o ID do documento
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       DetalheReceitaFirebasePage(
-                                    receitaId:
-                                        receita.id, // Passa o ID do documento
+                                    receitaId: receita.id,
                                   ),
                                 ),
                               );
@@ -150,10 +197,22 @@ class _ListaReceitasPageState extends State<ListaReceitasPage> {
                                         ],
                                       ),
                                     ),
-                                    const Icon(
-                                      Icons.arrow_forward,
-                                      color: Colors.black,
-                                      size: 24,
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () =>
+                                              _confirmarRemocao(receita.id),
+                                        ),
+                                        const Icon(
+                                          Icons.arrow_forward,
+                                          color: Colors.black,
+                                          size: 24,
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),

@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'detalhe_receita.dart'; // Importa a tela de detalhes da receita
-import 'lista_receitas.dart'; // Importa a tela de lista de receitas salvas
+import 'detalhe_receita.dart';
+import 'lista_receitas.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Substitua os valores abaixo pelas suas credenciais do Firebase
   const FirebaseOptions firebaseOptions = FirebaseOptions(
     apiKey: "AIzaSyAa_pDIscMAb3LbVi_lSv_qVSUppje6aCE",
     appId: "1:1049572431533:web:619b3d91e0d40b07ef5824",
@@ -27,6 +26,7 @@ class MeuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Firestore Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -46,7 +46,7 @@ class MinhaPaginaInicial extends StatefulWidget {
 class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
   List _receitas = [];
   bool _isLoading = false;
-  String _paisSelecionado = 'American'; // Valor padrão para o país
+  String _paisSelecionado = 'American';
 
   final List<String> _opcoesPais = [
     'American',
@@ -63,7 +63,7 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
   @override
   void initState() {
     super.initState();
-    _buscarReceitas(); // Buscar receitas ao iniciar a página
+    _buscarReceitas();
   }
 
   Future<void> _buscarReceitas() async {
@@ -113,7 +113,6 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
             IconButton(
               icon: const Icon(Icons.list),
               onPressed: () {
-                // Navegar para a tela de lista de receitas salvas
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -162,7 +161,6 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
                             final receita = _receitas[index];
                             return GestureDetector(
                               onTap: () {
-                                // Navegar para a tela de detalhes
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
