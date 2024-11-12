@@ -100,7 +100,7 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
           backgroundColor: const Color(0xFFE6E648),
           automaticallyImplyLeading: false,
           title: const Text(
-            'Início',
+            'Lanahas',
             style: TextStyle(
               fontFamily: 'Inter Tight',
               fontSize: 22,
